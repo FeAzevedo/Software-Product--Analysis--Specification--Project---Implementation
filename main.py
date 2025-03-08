@@ -1,20 +1,43 @@
-from typing import Union
+from typing import Annotated, Optional
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Query
+from sqlmodel import Field, Session, SQLModel, create_engine, select
 
-from pydantic import BaseModel
-
-app = FastAPI()
 
 #Aqui defino a classe do meu objeto
 
-class Veiculo(BaseModel):
+class Veiculo(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
     modelo: str
     valor: float
     cor: str
     ano: int
     
-banco_de_dados_provisorio = []    
+
+sqlite_file_name = "database_local.db"
+sqlite_url = f"sqlite:///{sqlite_file_name}"
+
+connect_args = {"check_same_thread": False}
+engine = create_engine(sqlite_url, connect_args=connect_args)
+
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+app = FastAPI()
+
+
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()  
     
 
 @app.get("/")
@@ -25,22 +48,15 @@ def read_root():
 #Cadastro de veículos
 
 @app.post("/veiculos")
-async def cadastra_veiculos(veiculo:Veiculo):
-    print("Vou cadastrar um veículo")
-    print(f"Modelo: {veiculo.modelo}")
-    print(f"Valor: {veiculo.valor}")
-    print(f"Cor: {veiculo.cor}")
-    print(f"Ano: {veiculo.ano}")
-    
-    banco_de_dados_provisorio.append(veiculo)
-   
+def cadastra_veiculos(veiculo:Veiculo, session: SessionDep) -> Veiculo: 
+    session.add(veiculo)
+    session.commit()
+    session.refresh(veiculo)
     return veiculo
 
 
 @app.get("/veiculos")
-async def lista_veiculos():
-    return banco_de_dados_provisorio
+def lista_veiculos(session: SessionDep) -> list[Veiculo]:
+    veiculos = session.exec(select(Veiculo)).all()
+    return veiculos
     
-
-
-
