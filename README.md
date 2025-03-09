@@ -32,7 +32,7 @@ pip install -r requirements.txt
 
 ### 4. Rodar o Backend (FastAPI)
 ```bash
-uvicorn back:app --reload
+fastapi dev main.py
 ```
 
 O servidor FastAPI rodará em `http://127.0.0.1:8000`.
@@ -40,7 +40,7 @@ O servidor FastAPI rodará em `http://127.0.0.1:8000`.
 ### 5. Rodar o Frontend (Streamlit)
 Abra outro terminal e execute:
 ```bash
-streamlit run front.py
+streamlit run frontend_streamlit.py
 ```
 
 O frontend estará acessível em `http://localhost:8501`.
