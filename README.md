@@ -1,64 +1,74 @@
-# Cadastro de Veículos
+Cadastro de Veículos
+Este é um projeto de cadastro de veículos utilizando FastAPI para o backend e Streamlit para o frontend.
 
-Este é um projeto de cadastro de veículos utilizando **FastAPI** para o backend e **Streamlit** para o frontend.
+Tecnologias Utilizadas
+FastAPI: Framework para criação da API.
 
-## Tecnologias Utilizadas
+SQLite: Banco de dados para armazenar os dados dos veículos.
 
-- **FastAPI**: Framework para criação da API.
-- **SQLite**: Banco de dados para armazenar os dados dos veículos.
-- **SQLModel**: ORM para interação com o banco de dados.
-- **Streamlit**: Interface gráfica para cadastro e exibição dos veículos.
-- **Requests**: Biblioteca para fazer requisições HTTP no frontend.
+SQLModel: ORM para interação com o banco de dados.
 
-## Como Rodar o Projeto
+Streamlit: Interface gráfica para cadastro e exibição dos veículos.
 
-### 1. Clonar o Repositório
-```bash
+Requests: Biblioteca para fazer requisições HTTP no frontend.
+
+Como Rodar o Projeto
+1. Clonar o Repositório
+bash
+Copiar
+Editar
 git clone https://github.com/seu-usuario/cadastro-de-veiculos.git
 cd cadastro-de-veiculos
-```
-
-### 2. Criar um Ambiente Virtual (Opcional, mas recomendado)
-```bash
+2. Criar um Ambiente Virtual (Opcional, mas recomendado)
+bash
+Copiar
+Editar
 python -m venv venv
 source venv/bin/activate  # Linux/macOS
 source .venv\Scripts\activate  # Windows
-```
-
-### 3. Instalar Dependências
-```bash
+3. Instalar Dependências
+bash
+Copiar
+Editar
 pip install -r requirements.txt
-```
-
-### 4. Rodar o Backend (FastAPI)
-```bash
+4. Rodar o Backend (FastAPI)
+bash
+Copiar
+Editar
 fastapi dev main.py
-```
+O servidor FastAPI rodará em http://127.0.0.1:8000.
 
-O servidor FastAPI rodará em `http://127.0.0.1:8000`.
-
-### 5. Rodar o Frontend (Streamlit)
+5. Rodar o Frontend (Streamlit)
 Abra outro terminal e execute:
-```bash
+
+bash
+Copiar
+Editar
 streamlit run frontend_streamlit.py
-```
+O frontend estará acessível em http://localhost:8501.
 
-O frontend estará acessível em `http://localhost:8501`.
+Endpoints da API
+GET /veiculos - Lista todos os veículos cadastrados.
 
-## Endpoints da API
+POST /veiculos - Cadastra um novo veículo.
 
-- **`GET /veiculos`** - Lista todos os veículos cadastrados.
-- **`POST /veiculos`** - Cadastra um novo veículo.
+DELETE /veiculos/{id} - Exclui um veículo pelo seu ID.
 
-## Funcionalidades
+Funcionalidades
+Cadastro de veículos com modelo, valor, cor e ano.
 
-- Cadastro de veículos com modelo, valor, cor e ano.
-- Listagem de veículos cadastrados.
-- Interface gráfica para interação fácil com o usuário.
+Listagem de veículos cadastrados.
 
-## Contribuição
-Se quiser contribuir com o projeto, fique à vontade para abrir uma *issue* ou enviar um *pull request*.
+Exclusão de veículos cadastrados.
 
-## Licença
+Interface gráfica para interação fácil com o usuário.
+
+Alterações da AC2:
+
+Exclusão de veículos: Agora, os veículos podem ser excluídos através da interface gráfica, utilizando um botão de exclusão para cada item da lista.
+
+Contribuição
+Se quiser contribuir com o projeto, fique à vontade para abrir uma issue ou enviar um pull request.
+
+Licença
 Este projeto está sob a licença MIT.
-
