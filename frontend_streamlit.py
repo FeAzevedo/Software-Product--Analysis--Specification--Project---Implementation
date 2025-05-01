@@ -1,55 +1,62 @@
 import streamlit as st
 import requests
 
-# Definir a URL da API FastAPI
-API_URL = "http://127.0.0.1:8000"
-
 st.title("Cadastro de Veículos")
 
-# Criar o formulário para cadastro de veículos
-with st.form("cadastro_veiculo"):
-    st.subheader("Cadastrar Novo Veículo")
-    
-    
-    modelo = st.text_input('Modelo')
-    valor = st.number_input('Valor', min_value=0.0, format="%.2f")
-    cor = st.selectbox('Cor', ['vermelho', 'azul', 'verde', 'preto', 'prata', 'branco'])
-    ano = st.number_input('Ano', min_value=2000, max_value=2100, step=1)
+# Cadastro de novo veículo
+st.header("Cadastrar Novo Veículo")
+with st.form("form_cadastro"):
+    modelo = st.text_input("Modelo")
+    valor = st.number_input("Valor")
+    cor = st.text_input("Cor")
+    ano = st.number_input("Ano", step=1)
+    submitted = st.form_submit_button("Cadastrar")
 
-    submit_button = st.form_submit_button("Cadastrar")
-
-    if submit_button:
-        if modelo and valor and ano:
-            veiculo = {
-                "modelo": modelo,
-                "valor": valor,
-                "cor": cor,
-                "ano": ano
-            }
-
-            response = requests.post(f"{API_URL}/veiculos", json=veiculo)
-
-            if response.status_code == 200:
-                st.success("Veículo cadastrado com sucesso!")
-             
-            else:
-                st.error("Erro ao cadastrar veículo.")
+    if submitted:
+        dados = {"modelo": modelo, "valor": valor, "cor": cor, "ano": ano}
+        response = requests.post("http://localhost:8000/veiculos", json=dados)
+        if response.status_code == 200:
+            st.success("Veículo cadastrado com sucesso!")
         else:
-            st.warning("Preencha todos os campos antes de enviar.")            
-        
+            st.error("Erro ao cadastrar veículo.")
 
-# Exibir a lista de veículos cadastrados
-st.subheader("Veículos Cadastrados")
-
-response = requests.get(f"{API_URL}/veiculos")
-
+# Listagem e ações dos veículos
+st.header("Veículos Cadastrados")
+response = requests.get("http://localhost:8000/veiculos")
 if response.status_code == 200:
     veiculos = response.json()
-    
-    if veiculos:
-        for veiculo in veiculos:
-            st.write(f"📌 **{veiculo['modelo']}** - {veiculo['cor']} - {veiculo['ano']} - R$ {veiculo['valor']:.2f}")
-    else:
-        st.info("Nenhum veículo cadastrado ainda.")
+    for veiculo in veiculos:
+        with st.expander(f"{veiculo['modelo']} - {veiculo['ano']}"):
+            st.write(f"Valor: R$ {veiculo['valor']}")
+            st.write(f"Cor: {veiculo['cor']}")
+
+            # Botão para deletar
+            if st.button(f"Excluir {veiculo['id']}"):
+                response = requests.delete(f"http://localhost:8000/veiculos/{veiculo['id']}")
+                if response.status_code == 200:
+                    st.success("Veículo excluído com sucesso!")
+                else:
+                    st.error("Erro ao excluir veículo.")
+
+            # Formulário de edição
+            with st.form(f"form_edit_{veiculo['id']}"):
+                novo_modelo = st.text_input("Editar Modelo", value=veiculo["modelo"])
+                novo_valor = st.number_input("Editar Valor", value=veiculo["valor"], key=f"valor_{veiculo['id']}")
+                nova_cor = st.text_input("Editar Cor", value=veiculo["cor"])
+                novo_ano = st.number_input("Editar Ano", value=veiculo["ano"], step=1, key=f"ano_{veiculo['id']}")
+
+                submitted_edit = st.form_submit_button("Salvar alterações")
+                if submitted_edit:
+                    dados_atualizados = {
+                        "modelo": novo_modelo,
+                        "valor": novo_valor,
+                        "cor": nova_cor,
+                        "ano": novo_ano,
+                    }
+                    res = requests.put(f"http://localhost:8000/veiculos/{veiculo['id']}", json=dados_atualizados)
+                    if res.status_code == 200:
+                        st.success("Veículo atualizado com sucesso!")
+                    else:
+                        st.error("Erro ao atualizar veículo.")
 else:
-    st.error("Erro ao carregar os veículos cadastrados.")
+    st.error("Erro ao buscar veículos.")
