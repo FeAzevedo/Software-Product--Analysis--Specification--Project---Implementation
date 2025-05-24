@@ -1,72 +1,62 @@
 import streamlit as st
 import requests
 
-API_URL = "http://127.0.0.1:8000"
-
 st.title("Cadastro de Veículos")
 
-# Formulário para cadastrar novo veículo
+# Cadastro de novo veículo
+st.header("Cadastrar Novo Veículo")
 with st.form("form_cadastro"):
-    st.subheader("Cadastrar Novo Veículo")
-
     modelo = st.text_input("Modelo")
-    valor = st.number_input("Valor", min_value=0.0, format="%.2f")
-    cor = st.selectbox("Cor", ["vermelho", "azul", "verde", "preto", "prata", "branco"])
-    ano = st.number_input("Ano", min_value=2000, max_value=2100, step=1)
-    placa = st.text_input("Placa do veículo")
-
+    valor = st.number_input("Valor")
+    cor = st.text_input("Cor")
+    ano = st.number_input("Ano", step=1)
     submitted = st.form_submit_button("Cadastrar")
 
     if submitted:
-        if modelo and valor and ano:
-            novo_veiculo = {
-                "modelo": modelo,
-                "valor": valor,
-                "cor": cor,
-                "ano": ano
-                # a placa não será enviada
-            }
-            response = requests.post(f"{API_URL}/veiculos", json=novo_veiculo)
-            if response.status_code == 200:
-                st.success(f"Veículo cadastrado com sucesso! [Placa: {placa}]")
-            else:
-                st.error("Erro ao cadastrar veículo.")
+        dados = {"modelo": modelo, "valor": valor, "cor": cor, "ano": ano}
+        response = requests.post("http://localhost:8000/veiculos", json=dados)
+        if response.status_code == 200:
+            st.success("Veículo cadastrado com sucesso!")
         else:
-            st.warning("Preencha todos os campos!")
+            st.error("Erro ao cadastrar veículo.")
 
-st.markdown("---")
-st.subheader("Veículos Cadastrados")
-
-# Buscar veículos
-response = requests.get(f"{API_URL}/veiculos")
-
+# Listagem e ações dos veículos
+st.header("Veículos Cadastrados")
+response = requests.get("http://localhost:8000/veiculos")
 if response.status_code == 200:
     veiculos = response.json()
-    if veiculos:
-        for veiculo in veiculos:
-            st.write(f"📌 **{veiculo['modelo']}** - {veiculo['cor']} - {veiculo['ano']} - R$ {veiculo['valor']:.2f}")
-            
-            with st.expander(f"Editar {veiculo['modelo']}"):
-                novo_modelo = st.text_input(f"Modelo - {veiculo['id']}", value=veiculo["modelo"])
-                novo_valor = st.number_input(f"Valor - {veiculo['id']}", value=veiculo["valor"], format="%.2f")
-                nova_cor = st.selectbox(f"Cor - {veiculo['id']}", ["vermelho", "azul", "verde", "preto", "prata", "branco"], index=["vermelho", "azul", "verde", "preto", "prata", "branco"].index(veiculo["cor"]))
-                novo_ano = st.number_input(f"Ano - {veiculo['id']}", value=veiculo["ano"], min_value=2000, max_value=2100, step=1)
-                nova_placa = st.text_input(f"Placa- {veiculo['id']}")
+    for veiculo in veiculos:
+        with st.expander(f"{veiculo['modelo']} - {veiculo['ano']}"):
+            st.write(f"Valor: R$ {veiculo['valor']}")
+            st.write(f"Cor: {veiculo['cor']}")
 
-                if st.button(f"Alterar - ID {veiculo['id']}"):
-                    dados_alterados = {
+            # Botão para deletar
+            if st.button(f"Excluir {veiculo['id']}"):
+                response = requests.delete(f"http://localhost:8000/veiculos/{veiculo['id']}")
+                if response.status_code == 200:
+                    st.success("Veículo excluído com sucesso!")
+                else:
+                    st.error("Erro ao excluir veículo.")
+
+            # Formulário de edição
+            with st.form(f"form_edit_{veiculo['id']}"):
+                novo_modelo = st.text_input("Editar Modelo", value=veiculo["modelo"])
+                novo_valor = st.number_input("Editar Valor", value=veiculo["valor"], key=f"valor_{veiculo['id']}")
+                nova_cor = st.text_input("Editar Cor", value=veiculo["cor"])
+                novo_ano = st.number_input("Editar Ano", value=veiculo["ano"], step=1, key=f"ano_{veiculo['id']}")
+
+                submitted_edit = st.form_submit_button("Salvar alterações")
+                if submitted_edit:
+                    dados_atualizados = {
                         "modelo": novo_modelo,
                         "valor": novo_valor,
                         "cor": nova_cor,
-                        "ano": novo_ano
-                        # placa não é enviada
+                        "ano": novo_ano,
                     }
-                    update_response = requests.put(f"{API_URL}/veiculos/{veiculo['id']}", json=dados_alterados)
-                    if update_response.status_code == 200:
-                        st.success(f"Veículo alterado com sucesso! [Placa informada: {nova_placa}]")
+                    res = requests.put(f"http://localhost:8000/veiculos/{veiculo['id']}", json=dados_atualizados)
+                    if res.status_code == 200:
+                        st.success("Veículo atualizado com sucesso!")
                     else:
-                        st.error("Erro ao alterar o veículo.")
-    else:
-        st.info("Nenhum veículo cadastrado.")
+                        st.error("Erro ao atualizar veículo.")
 else:
     st.error("Erro ao buscar veículos.")
