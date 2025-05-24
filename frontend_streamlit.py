@@ -51,7 +51,7 @@ if response.status_code == 200:
                 novo_valor = st.number_input(f"Valor - {veiculo['id']}", value=veiculo["valor"], format="%.2f")
                 nova_cor = st.selectbox(f"Cor - {veiculo['id']}", ["vermelho", "azul", "verde", "preto", "prata", "branco"], index=["vermelho", "azul", "verde", "preto", "prata", "branco"].index(veiculo["cor"]))
                 novo_ano = st.number_input(f"Ano - {veiculo['id']}", value=veiculo["ano"], min_value=2000, max_value=2100, step=1)
-                nova_placa = st.text_input(f"Placa - {veiculo['id']}")
+                nova_placa = st.text_input(f"Placa- {veiculo['id']}")
 
                 if st.button(f"Alterar - ID {veiculo['id']}"):
                     dados_alterados = {

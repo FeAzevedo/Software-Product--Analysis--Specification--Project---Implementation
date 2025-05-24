@@ -1,8 +1,11 @@
-from typing import Annotated, Optional, List
-from fastapi import Depends, FastAPI, HTTPException
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from fastapi import FastAPI, HTTPException
+from sqlmodel import SQLModel, Field, Session, create_engine, select
+from typing import Optional, List
 
-# Modelo do banco
+# Inicialização do FastAPI
+app = FastAPI()
+
+# Definição do modelo de dados
 class Veiculo(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     modelo: str
@@ -10,61 +13,58 @@ class Veiculo(SQLModel, table=True):
     cor: str
     ano: int
 
-# Configuração do banco SQLite
+# Configuração do banco de dados
 sqlite_file_name = "database_local.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+engine = create_engine(f"sqlite:///{sqlite_file_name}", echo=False)
 
-connect_args = {"check_same_thread": False}
-engine = create_engine(sqlite_url, connect_args=connect_args)
-
-# Criação da tabela
-def create_db_and_tables():
+def criar_db():
     SQLModel.metadata.create_all(engine)
-
-# Sessão do banco
-def get_session():
-    with Session(engine) as session:
-        yield session
-
-SessionDep = Annotated[Session, Depends(get_session)]
-
-# Inicialização FastAPI
-app = FastAPI()
 
 @app.on_event("startup")
 def on_startup():
-    create_db_and_tables()
+    criar_db()
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+# Rota para cadastrar um novo veículo
+@app.post("/veiculos")
+def cadastrar_veiculo(veiculo: Veiculo):
+    with Session(engine) as session:
+        session.add(veiculo)
+        session.commit()
+        session.refresh(veiculo)
+        return veiculo
 
-# POST - Cadastrar veículo
-@app.post("/veiculos", response_model=Veiculo)
-def cadastrar_veiculo(veiculo: Veiculo, session: SessionDep):
-    session.add(veiculo)
-    session.commit()
-    session.refresh(veiculo)
-    return veiculo
-
-# GET - Listar todos os veículos
+# Rota para listar todos os veículos
 @app.get("/veiculos", response_model=List[Veiculo])
-def listar_veiculos(session: SessionDep):
-    return session.exec(select(Veiculo)).all()
+def listar_veiculos():
+    with Session(engine) as session:
+        veiculos = session.exec(select(Veiculo)).all()
+        return veiculos
 
-# PUT - Alterar veículo
-@app.put("/veiculos/{veiculo_id}", response_model=Veiculo)
-def alterar_veiculo(veiculo_id: int, veiculo: Veiculo, session: SessionDep):
-    db_veiculo = session.get(Veiculo, veiculo_id)
-    if not db_veiculo:
-        raise HTTPException(status_code=404, detail="Veículo não encontrado")
+# Rota para deletar um veículo
+@app.delete("/veiculos/{veiculo_id}")
+def deletar_veiculo(veiculo_id: int):
+    with Session(engine) as session:
+        veiculo = session.get(Veiculo, veiculo_id)
+        if not veiculo:
+            raise HTTPException(status_code=404, detail="Veículo não encontrado")
+        session.delete(veiculo)
+        session.commit()
+        return {"ok": True}
 
-    db_veiculo.modelo = veiculo.modelo
-    db_veiculo.valor = veiculo.valor
-    db_veiculo.cor = veiculo.cor
-    db_veiculo.ano = veiculo.ano
+# Rota para atualizar os dados de um veículo
+@app.put("/veiculos/{veiculo_id}")
+def atualizar_veiculo(veiculo_id: int, veiculo_atualizado: Veiculo):
+    with Session(engine) as session:
+        veiculo = session.get(Veiculo, veiculo_id)
+        if not veiculo:
+            raise HTTPException(status_code=404, detail="Veículo não encontrado")
 
-    session.add(db_veiculo)
-    session.commit()
-    session.refresh(db_veiculo)
-    return db_veiculo
+        veiculo.modelo = veiculo_atualizado.modelo
+        veiculo.valor = veiculo_atualizado.valor
+        veiculo.cor = veiculo_atualizado.cor
+        veiculo.ano = veiculo_atualizado.ano
+
+        session.add(veiculo)
+        session.commit()
+        session.refresh(veiculo)
+        return veiculo
